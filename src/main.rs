@@ -7,18 +7,17 @@ use minifb::{Key, Window, WindowOptions};
 use std::f32::consts::PI;
 use std::time::Duration;
 
-use crate::caster::cast_ray;
+use crate::caster::{cast_ray, cast_ray_3d};
 use crate::framebuffer::Framebuffer;
 use crate::maze::{load_maze, Maze};
 use crate::player::{process_events, Player};
 
 const BLOCK_SIZE: usize = 100;
-
-/// Cantidad de rayos que se lanzan en abanico para formar el campo de visión.
-const NUM_RAYS: usize = 5;
-
-/// Amplitud del campo de visión (field of view), en radianes.
+const WIDTH: usize = 1300;
+const HEIGHT: usize = 900;
 const FOV: f32 = PI / 3.0;
+
+const NUM_RAYS: usize = 5;
 
 fn cell_color(cell: char) -> u32 {
     match cell {
@@ -44,7 +43,7 @@ fn draw_cell(framebuffer: &mut Framebuffer, xo: usize, yo: usize, cell: char) {
     }
 }
 
-fn render(framebuffer: &mut Framebuffer, maze: &Maze, player: &Player) {
+fn render_2d(framebuffer: &mut Framebuffer, maze: &Maze, player: &Player) {
     for (row, line) in maze.iter().enumerate() {
         for (col, &cell) in line.iter().enumerate() {
             draw_cell(framebuffer, col * BLOCK_SIZE, row * BLOCK_SIZE, cell);
@@ -62,10 +61,6 @@ fn render(framebuffer: &mut Framebuffer, maze: &Maze, player: &Player) {
         }
     }
 
-    // lanza un abanico de rayos centrado en la dirección de vista del jugador.
-    // El campo de visión (FOV) se reparte de forma pareja entre los NUM_RAYS
-    // rayos: el primero apunta a `a - FOV/2`, el último a `a + FOV/2` y el del
-    // medio coincide con la dirección de vista.
     for i in 0..NUM_RAYS {
         let ray_fraction = i as f32 / (NUM_RAYS - 1) as f32; // de 0.0 a 1.0
         let angle = player.a - FOV / 2.0 + FOV * ray_fraction;
@@ -73,25 +68,41 @@ fn render(framebuffer: &mut Framebuffer, maze: &Maze, player: &Player) {
     }
 }
 
+fn render_3d(framebuffer: &mut Framebuffer, maze: &Maze, player: &Player) {
+    let horizon = HEIGHT as f32 / 2.0;
+    let distance_to_plane = (WIDTH as f32 / 2.0) / (FOV / 2.0).tan();
+    let db = FOV / (WIDTH - 1) as f32;
+
+    for i in 0..WIDTH {
+        let b = -FOV / 2.0 + db * i as f32;
+        let ray_angle = player.a + b;
+
+        let Some((raw_distance, wall)) = cast_ray_3d(maze, player, ray_angle, BLOCK_SIZE) else {
+            continue;
+        };
+
+        let corrected_distance = raw_distance * b.cos();
+        let wall_height = BLOCK_SIZE as f32 / corrected_distance * distance_to_plane;
+
+        let top = (horizon - wall_height / 2.0).clamp(0.0, HEIGHT as f32) as usize;
+        let bottom = (horizon + wall_height / 2.0).clamp(0.0, HEIGHT as f32) as usize;
+
+        framebuffer.set_current_color(cell_color(wall));
+        for y in top..bottom {
+            framebuffer.point(i, y);
+        }
+    }
+}
+
 fn main() {
-    let window_width = 1300;
-    let window_height = 900;
-    let framebuffer_width = 1300;
-    let framebuffer_height = 900;
     let frame_delay = Duration::from_millis(16);
 
     let (maze, mut player) = load_maze("./maze.txt", BLOCK_SIZE);
 
-    let mut framebuffer = Framebuffer::new(framebuffer_width, framebuffer_height);
+    let mut framebuffer = Framebuffer::new(WIDTH, HEIGHT);
     framebuffer.set_background_color(0x333355);
 
-    let mut window = Window::new(
-        "Maze Runner",
-        window_width,
-        window_height,
-        WindowOptions::default(),
-    )
-    .unwrap();
+    let mut window = Window::new("Maze Runner", WIDTH, HEIGHT, WindowOptions::default()).unwrap();
 
     while window.is_open() && !window.is_key_down(Key::Escape) {
         process_events(&window, &mut player);
@@ -107,10 +118,11 @@ fn main() {
 
         framebuffer.clear();
 
-        render(&mut framebuffer, &maze, &player);
+        // render_2d(&mut framebuffer, &maze, &player);
+        render_3d(&mut framebuffer, &maze, &player);
 
         window
-            .update_with_buffer(&framebuffer.buffer, framebuffer_width, framebuffer_height)
+            .update_with_buffer(&framebuffer.buffer, WIDTH, HEIGHT)
             .unwrap();
 
         std::thread::sleep(frame_delay);

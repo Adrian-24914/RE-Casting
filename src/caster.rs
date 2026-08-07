@@ -33,3 +33,29 @@ pub fn cast_ray(
         d += 1.0;
     }
 }
+
+pub fn cast_ray_3d(maze: &Maze, player: &Player, a: f32, block_size: usize) -> Option<(f32, char)> {
+    let mut d = 0.0;
+
+    loop {
+        let x = player.pos.x + d * a.cos();
+        let y = player.pos.y + d * a.sin();
+
+        if x < 0.0 || y < 0.0 {
+            return None;
+        }
+
+        let i = x as usize / block_size;
+        let j = y as usize / block_size;
+
+        if j >= maze.len() || i >= maze[j].len() {
+            return None;
+        }
+
+        if maze[j][i] != ' ' {
+            return Some((d, maze[j][i]));
+        }
+
+        d += 1.0;
+    }
+}
