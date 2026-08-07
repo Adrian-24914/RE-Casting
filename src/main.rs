@@ -105,7 +105,7 @@ fn main() {
     let mut window = Window::new("Maze Runner", WIDTH, HEIGHT, WindowOptions::default()).unwrap();
 
     while window.is_open() && !window.is_key_down(Key::Escape) {
-        process_events(&window, &mut player);
+        process_events(&window, &mut player, &maze, BLOCK_SIZE);
 
         // ¿el jugador llegó a la meta? Se traduce su posición en píxeles a la
         // celda que ocupa y se revisa si esa celda es la marca `g`.
