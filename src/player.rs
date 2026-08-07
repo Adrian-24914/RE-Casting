@@ -34,7 +34,7 @@ fn can_move_to(maze: &Maze, position: &Vec2, block_size: usize, radius: f32) -> 
 pub fn process_events(window: &Window, player: &mut Player, maze: &Maze, block_size: usize) {
     const MOVE_SPEED: f32 = 7.0;
     const ROTATION_SPEED: f32 = PI / 40.0;
-    const PLAYER_RADIUS: f32 = 15.0;
+    const PLAYER_RADIUS: f32 = 10.0;
 
     if window.is_key_down(Key::A) {
         player.a -= ROTATION_SPEED;

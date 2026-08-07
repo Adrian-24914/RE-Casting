@@ -3,7 +3,7 @@ mod framebuffer;
 mod maze;
 mod player;
 
-use minifb::{Key, Window, WindowOptions};
+use minifb::{Key, KeyRepeat, Window, WindowOptions};
 use std::f32::consts::PI;
 use std::time::Duration;
 
@@ -18,6 +18,12 @@ const HEIGHT: usize = 900;
 const FOV: f32 = PI / 3.0;
 
 const NUM_RAYS: usize = 5;
+
+#[derive(Clone, Copy)]
+enum RenderMode {
+    Map2D,
+    View3D,
+}
 
 fn cell_color(cell: char) -> u32 {
     match cell {
@@ -55,8 +61,8 @@ fn render_2d(framebuffer: &mut Framebuffer, maze: &Maze, player: &Player) {
     let px = player.pos.x as usize;
     let py = player.pos.y as usize;
 
-    for x in px.saturating_sub(3)..=px + 3 {
-        for y in py.saturating_sub(3)..=py + 3 {
+    for x in px.saturating_sub(3)..=px + 5 {
+        for y in py.saturating_sub(3)..=py + 5 {
             framebuffer.point(x, y);
         }
     }
@@ -102,10 +108,18 @@ fn main() {
     let mut framebuffer = Framebuffer::new(WIDTH, HEIGHT);
     framebuffer.set_background_color(0x333355);
 
-    let mut window = Window::new("Maze Runner", WIDTH, HEIGHT, WindowOptions::default()).unwrap();
+    let mut window = Window::new("Resident Evil Casting", WIDTH, HEIGHT, WindowOptions::default()).unwrap();
+    let mut render_mode = RenderMode::View3D;
 
     while window.is_open() && !window.is_key_down(Key::Escape) {
         process_events(&window, &mut player, &maze, BLOCK_SIZE);
+
+        if window.is_key_pressed(Key::M, KeyRepeat::No) {
+            render_mode = match render_mode {
+                RenderMode::Map2D => RenderMode::View3D,
+                RenderMode::View3D => RenderMode::Map2D,
+            };
+        }
 
         // ¿el jugador llegó a la meta? Se traduce su posición en píxeles a la
         // celda que ocupa y se revisa si esa celda es la marca `g`.
@@ -118,8 +132,10 @@ fn main() {
 
         framebuffer.clear();
 
-        // render_2d(&mut framebuffer, &maze, &player);
-        render_3d(&mut framebuffer, &maze, &player);
+        match render_mode {
+            RenderMode::Map2D => render_2d(&mut framebuffer, &maze, &player),
+            RenderMode::View3D => render_3d(&mut framebuffer, &maze, &player),
+        }
 
         window
             .update_with_buffer(&framebuffer.buffer, WIDTH, HEIGHT)
