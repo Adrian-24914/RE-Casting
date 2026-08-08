@@ -10,7 +10,7 @@ use std::time::Duration;
 use crate::framebuffer::Framebuffer;
 use crate::maze::load_maze;
 use crate::player::process_events;
-use crate::renderer::{render, RenderMode, BLOCK_SIZE, HEIGHT, WIDTH};
+use crate::renderer::{Renderer, BLOCK_SIZE, HEIGHT, WIDTH};
 
 fn main() {
     let frame_delay = Duration::from_millis(16);
@@ -27,13 +27,13 @@ fn main() {
         WindowOptions::default(),
     )
     .unwrap();
-    let mut render_mode = RenderMode::View3D;
+    let mut renderer = Renderer::new(&maze);
 
     while window.is_open() && !window.is_key_down(Key::Escape) {
         process_events(&window, &mut player, &maze, BLOCK_SIZE);
 
         if window.is_key_pressed(Key::M, KeyRepeat::No) {
-            render_mode.toggle();
+            renderer.toggle_mode();
         }
 
         // ¿el jugador llegó a la meta? Se traduce su posición en píxeles a la
@@ -45,9 +45,7 @@ fn main() {
             break;
         }
 
-        framebuffer.clear();
-
-        render(render_mode, &mut framebuffer, &maze, &player);
+        renderer.render(&mut framebuffer, &maze, &player);
 
         window
             .update_with_buffer(&framebuffer.buffer, WIDTH, HEIGHT)
