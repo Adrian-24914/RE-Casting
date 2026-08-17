@@ -1,28 +1,22 @@
-use crate::framebuffer::Framebuffer;
 use crate::maze::Maze;
 use crate::player::Player;
 
 pub fn cast_ray(
-    mut framebuffer: Option<&mut Framebuffer>,
     maze: &Maze,
     player: &Player,
     a: f32,
     block_size: usize,
     max_distance: f32,
     explored: &mut [Vec<bool>],
-) {
+) -> f32 {
     let mut d = 0.0;
-
-    if let Some(framebuffer) = framebuffer.as_deref_mut() {
-        framebuffer.set_current_color(0xFFDDDD);
-    }
 
     while d <= max_distance {
         let ray_x = player.pos.x + d * a.cos();
         let ray_y = player.pos.y + d * a.sin();
 
         if ray_x < 0.0 || ray_y < 0.0 {
-            return;
+            return d;
         }
 
         let x = ray_x as usize;
@@ -32,21 +26,19 @@ pub fn cast_ray(
         let j = y / block_size;
 
         if j >= maze.len() || i >= maze[j].len() {
-            return;
+            return d;
         }
 
         explored[j][i] = true;
 
         if maze[j][i] != ' ' {
-            return;
-        }
-
-        if let Some(framebuffer) = framebuffer.as_deref_mut() {
-            framebuffer.point(x, y);
+            return d;
         }
 
         d += 1.0;
     }
+
+    max_distance
 }
 
 pub fn cast_ray_3d(maze: &Maze, player: &Player, a: f32, block_size: usize) -> Option<(f32, char)> {

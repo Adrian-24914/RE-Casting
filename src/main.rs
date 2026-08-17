@@ -1,5 +1,6 @@
 mod caster;
 mod framebuffer;
+mod map_renderer;
 mod maze;
 mod player;
 mod renderer;
