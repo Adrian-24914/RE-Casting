@@ -16,7 +16,7 @@ use crate::renderer::{Renderer, BLOCK_SIZE, HEIGHT, WIDTH};
 fn main() {
     let frame_delay = Duration::from_millis(16);
 
-    let (maze, mut player) = load_maze("./maze.txt", BLOCK_SIZE);
+    let (mut maze, mut player) = load_maze("./maze.txt", BLOCK_SIZE);
 
     let mut framebuffer = Framebuffer::new(WIDTH, HEIGHT);
     framebuffer.set_background_color(0x333355);
@@ -31,7 +31,7 @@ fn main() {
     let mut renderer = Renderer::new(&maze);
 
     while window.is_open() && !window.is_key_down(Key::Escape) {
-        process_events(&window, &mut player, &maze, BLOCK_SIZE);
+        process_events(&window, &mut player, &mut maze, BLOCK_SIZE);
 
         if window.is_key_pressed(Key::M, KeyRepeat::No) {
             renderer.toggle_mode();
@@ -41,7 +41,11 @@ fn main() {
         // celda que ocupa y se revisa si esa celda es la marca `g`.
         let i = player.pos.x as usize / BLOCK_SIZE;
         let j = player.pos.y as usize / BLOCK_SIZE;
-        if maze.get(j).and_then(|row| row.get(i)) == Some(&'g') {
+        if maze
+            .get(j)
+            .and_then(|row| row.get(i))
+            .is_some_and(|cell| matches!(*cell, 'g' | 'G'))
+        {
             println!("¡Meta alcanzada! Fin del juego.");
             break;
         }

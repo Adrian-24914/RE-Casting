@@ -21,7 +21,7 @@ struct Ray {
 /// Estado y dibujo del mapa 2D.
 ///
 /// Las posiciones del juego siguen expresadas con `block_size`, mientras que
-/// `MapLayout` las convierte a píxeles del framebuffer. 
+/// `MapLayout` las convierte a píxeles del framebuffer.
 pub struct MapRenderer {
     explored: Vec<Vec<bool>>,
     rays: [Ray; NUM_RAYS],
@@ -209,6 +209,10 @@ fn explored_cell_color(cell: char) -> u32 {
         ' ' => 0x333355,
         '+' => 0x00AAFF,
         '-' | '|' => 0xFF5555,
+        'D' => 0x8B4513,
+        'K' => 0xFFFF00,
+        'L' => 0x00FF00,
+        'R' => 0x000000,
         'g' | 'G' => 0x00FF00,
         _ => 0xFFDDDD,
     }

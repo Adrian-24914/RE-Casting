@@ -62,6 +62,10 @@ fn cell_color(cell: char) -> u32 {
         '+' => 0x00AAFF,       // columnas
         '-' => 0xFF5555,       // paredes horizontales
         '|' => 0xFF5555,       // paredes verticales
+        'D' => 0x8B4513,       // puerta
+        'K' => 0xFFFF00,       // llave
+        'L' => 0x00FF00,       // pared izquierda
+        'R' => 0x000000,       // pared derecha
         'g' | 'G' => 0x00FF00, // meta
         _ => 0xFFDDDD,         // cualquier otra cosa
     }
