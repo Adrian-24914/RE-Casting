@@ -7,10 +7,10 @@ const MAP_PADDING: f32 = 20.0;
 const NUM_RAYS: usize = 5;
 const VIEW_DISTANCE_IN_CELLS: f32 = 3.0;
 
-const BACKGROUND_COLOR: u32 = 0x08080D;
-const UNEXPLORED_COLOR: u32 = 0x161622;
-const PLAYER_COLOR: u32 = 0xFFFF00;
-const RAY_COLOR: u32 = 0xFFDDDD;
+const BACKGROUND_COLOR: u32 = 0xD7D7D7;
+const UNEXPLORED_COLOR: u32 = 0x9E9E9E;
+const PLAYER_COLOR: u32 = 0x1565C0;
+const RAY_COLOR: u32 = 0x64B5F6;
 
 #[derive(Clone, Copy, Default)]
 struct Ray {
@@ -206,15 +206,12 @@ fn same_shape(explored: &[Vec<bool>], maze: &Maze) -> bool {
 
 fn explored_cell_color(cell: char) -> u32 {
     match cell {
-        ' ' => 0x333355,
-        '+' => 0x00AAFF,
-        '-' | '|' => 0xFF5555,
-        'D' => 0x8B4513,
-        'K' => 0xFFFF00,
-        'L' => 0x00FF00,
-        'R' => 0x000000,
-        'g' | 'G' => 0x00FF00,
-        _ => 0xFFDDDD,
+        ' ' => 0xF5F5F5,
+        '+' | '-' | '|' | 'L' | 'R' => 0x303030,
+        'D' => 0x8D6E63,
+        'K' => 0xFBC02D,
+        'g' | 'G' => 0x43A047,
+        _ => 0xE0E0E0,
     }
 }
 

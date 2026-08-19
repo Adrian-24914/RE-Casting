@@ -4,9 +4,10 @@ mod map_renderer;
 mod maze;
 mod player;
 mod renderer;
+mod texture_manager;
 
 use minifb::{Key, KeyRepeat, Window, WindowOptions};
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use crate::framebuffer::Framebuffer;
 use crate::maze::load_maze;
@@ -31,6 +32,7 @@ fn main() {
     let mut renderer = Renderer::new(&maze);
 
     while window.is_open() && !window.is_key_down(Key::Escape) {
+        let frame_start = Instant::now();
         process_events(&window, &mut player, &mut maze, BLOCK_SIZE);
 
         if window.is_key_pressed(Key::M, KeyRepeat::No) {
@@ -56,6 +58,8 @@ fn main() {
             .update_with_buffer(&framebuffer.buffer, WIDTH, HEIGHT)
             .unwrap();
 
-        std::thread::sleep(frame_delay);
+        if let Some(remaining_time) = frame_delay.checked_sub(frame_start.elapsed()) {
+            std::thread::sleep(remaining_time);
+        }
     }
 }
