@@ -1,3 +1,4 @@
+mod audio_manager;
 mod caster;
 mod framebuffer;
 mod map_renderer;
@@ -9,6 +10,7 @@ mod texture_manager;
 use minifb::{Key, KeyRepeat, Window, WindowOptions};
 use std::time::{Duration, Instant};
 
+use crate::audio_manager::AudioManager;
 use crate::framebuffer::Framebuffer;
 use crate::maze::load_maze;
 use crate::player::process_events;
@@ -30,10 +32,19 @@ fn main() {
     )
     .unwrap();
     let mut renderer = Renderer::new(&maze);
+    let mut audio = AudioManager::new("assets");
+    audio.play_background_music();
 
     while window.is_open() && !window.is_key_down(Key::Escape) {
         let frame_start = Instant::now();
-        process_events(&window, &mut player, &mut maze, BLOCK_SIZE);
+        let events = process_events(&window, &mut player, &mut maze, BLOCK_SIZE);
+
+        if events.key_collected {
+            audio.play_key_pickup();
+        }
+        if events.door_opened {
+            audio.play_door_open();
+        }
 
         if window.is_key_pressed(Key::M, KeyRepeat::No) {
             renderer.toggle_mode();

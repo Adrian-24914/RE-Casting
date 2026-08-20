@@ -10,6 +10,12 @@ pub struct Player {
     pub has_key: bool,
 }
 
+#[derive(Default)]
+pub struct GameEvents {
+    pub key_collected: bool,
+    pub door_opened: bool,
+}
+
 fn can_move_to(maze: &Maze, position: &Vec2, block_size: usize, radius: f32) -> bool {
     let collision_points = [
         (position.x - radius, position.y - radius),
@@ -32,7 +38,7 @@ fn can_move_to(maze: &Maze, position: &Vec2, block_size: usize, radius: f32) -> 
     })
 }
 
-fn collect_key(maze: &mut Maze, player: &mut Player, block_size: usize) {
+fn collect_key(maze: &mut Maze, player: &mut Player, block_size: usize) -> bool {
     let column = player.pos.x as usize / block_size;
     let row = player.pos.y as usize / block_size;
 
@@ -40,10 +46,13 @@ fn collect_key(maze: &mut Maze, player: &mut Player, block_size: usize) {
         maze[row][column] = ' ';
         player.has_key = true;
         println!("¡Llave recogida! Ya puedes abrir la puerta.");
+        return true;
     }
+
+    false
 }
 
-fn open_touched_doors(maze: &mut Maze, position: &Vec2, block_size: usize, radius: f32) {
+fn open_touched_doors(maze: &mut Maze, position: &Vec2, block_size: usize, radius: f32) -> bool {
     let collision_points = [
         (position.x - radius, position.y - radius),
         (position.x + radius, position.y - radius),
@@ -68,9 +77,16 @@ fn open_touched_doors(maze: &mut Maze, position: &Vec2, block_size: usize, radiu
     if opened_door {
         println!("¡Puerta abierta con la llave!");
     }
+
+    opened_door
 }
 
-pub fn process_events(window: &Window, player: &mut Player, maze: &mut Maze, block_size: usize) {
+pub fn process_events(
+    window: &Window,
+    player: &mut Player,
+    maze: &mut Maze,
+    block_size: usize,
+) -> GameEvents {
     const MOVE_SPEED: f32 = 7.0;
     const ROTATION_SPEED: f32 = PI / 40.0;
     const PLAYER_RADIUS: f32 = 10.0;
@@ -95,10 +111,11 @@ pub fn process_events(window: &Window, player: &mut Player, maze: &mut Maze, blo
 
     let dx = movement * player.a.cos();
     let dy = movement * player.a.sin();
+    let mut events = GameEvents::default();
 
     let next_x = Vec2::new(player.pos.x + dx, player.pos.y);
     if player.has_key {
-        open_touched_doors(maze, &next_x, block_size, PLAYER_RADIUS);
+        events.door_opened |= open_touched_doors(maze, &next_x, block_size, PLAYER_RADIUS);
     }
     if can_move_to(maze, &next_x, block_size, PLAYER_RADIUS) {
         player.pos.x = next_x.x;
@@ -106,11 +123,12 @@ pub fn process_events(window: &Window, player: &mut Player, maze: &mut Maze, blo
 
     let next_y = Vec2::new(player.pos.x, player.pos.y + dy);
     if player.has_key {
-        open_touched_doors(maze, &next_y, block_size, PLAYER_RADIUS);
+        events.door_opened |= open_touched_doors(maze, &next_y, block_size, PLAYER_RADIUS);
     }
     if can_move_to(maze, &next_y, block_size, PLAYER_RADIUS) {
         player.pos.y = next_y.y;
     }
 
-    collect_key(maze, player, block_size);
+    events.key_collected = collect_key(maze, player, block_size);
+    events
 }

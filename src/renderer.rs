@@ -1,4 +1,4 @@
-use std::f32::consts::PI;
+use std::{f32::consts::PI, time::Instant};
 
 use crate::caster::{cast_ray_3d, RayHit};
 use crate::framebuffer::Framebuffer;
@@ -13,6 +13,8 @@ pub const HEIGHT: usize = 600;
 const FOV: f32 = PI / 3.0;
 const ATTENUATION_DISTANCE: f32 = 1800.0;
 const MIN_BRIGHTNESS: f32 = 0.4;
+const KEY_BOB_SPEED: f32 = 3.0;
+const KEY_BOB_AMOUNT: f32 = 0.08;
 
 #[derive(Clone, Copy)]
 pub enum RenderMode {
@@ -25,6 +27,7 @@ pub struct Renderer {
     map_renderer: MapRenderer,
     textures: TextureManager,
     background_3d: Vec<u32>,
+    animation_start: Instant,
 }
 
 impl Renderer {
@@ -38,6 +41,7 @@ impl Renderer {
             map_renderer: MapRenderer::new(maze),
             textures,
             background_3d,
+            animation_start: Instant::now(),
         }
     }
 
@@ -64,6 +68,7 @@ impl Renderer {
                     player,
                     &self.textures,
                     &self.background_3d,
+                    self.animation_start.elapsed().as_secs_f32(),
                 );
             }
         }
@@ -76,10 +81,18 @@ fn render_3d(
     player: &Player,
     textures: &TextureManager,
     background: &[u32],
+    animation_time: f32,
 ) {
     framebuffer.buffer.copy_from_slice(background);
     let wall_depths = render_walls(framebuffer, maze, player, textures);
-    render_key_sprites(framebuffer, maze, player, textures, &wall_depths);
+    render_key_sprites(
+        framebuffer,
+        maze,
+        player,
+        textures,
+        &wall_depths,
+        animation_time,
+    );
 }
 
 fn render_walls(
@@ -158,6 +171,7 @@ fn render_key_sprites(
     player: &Player,
     textures: &TextureManager,
     wall_depths: &[f32],
+    animation_time: f32,
 ) {
     let horizon = HEIGHT as f32 / 2.0;
     let distance_to_plane = (WIDTH as f32 / 2.0) / (FOV / 2.0).tan();
@@ -188,7 +202,8 @@ fn render_key_sprites(
             let projected_cell_height = BLOCK_SIZE as f32 / depth * distance_to_plane;
             let sprite_size = projected_cell_height * 0.7;
             let center_x = WIDTH as f32 / 2.0 + relative_angle.tan() * distance_to_plane;
-            let floor_y = horizon + projected_cell_height / 2.0;
+            let bob = (animation_time * KEY_BOB_SPEED).sin() * sprite_size * KEY_BOB_AMOUNT;
+            let floor_y = horizon + projected_cell_height / 2.0 - bob;
             let left = (center_x - sprite_size / 2.0) as isize;
             let top = (floor_y - sprite_size) as isize;
             let right = (center_x + sprite_size / 2.0) as isize;
@@ -220,4 +235,3 @@ fn draw_texel(framebuffer: &mut Framebuffer, x: usize, y: usize, texel: Texel) {
         framebuffer.buffer[y * framebuffer.width + x] = texel.color;
     }
 }
-
