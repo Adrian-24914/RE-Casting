@@ -100,5 +100,3 @@ pub fn cast_ray_3d(maze: &Maze, player: &Player, a: f32, block_size: usize) -> O
         distance += RAY_STEP;
     }
 }
-
-

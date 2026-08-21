@@ -10,13 +10,6 @@ const VIEW_DISTANCE_IN_CELLS: f32 = 3.0;
 const BACKGROUND_COLOR: u32 = 0xD7D7D7;
 const UNEXPLORED_COLOR: u32 = 0x9E9E9E;
 const PLAYER_COLOR: u32 = 0x1565C0;
-const RAY_COLOR: u32 = 0x64B5F6;
-
-#[derive(Clone, Copy, Default)]
-struct Ray {
-    angle: f32,
-    distance: f32,
-}
 
 /// Estado y dibujo del mapa 2D.
 ///
@@ -24,14 +17,12 @@ struct Ray {
 /// `MapLayout` las convierte a píxeles del framebuffer.
 pub struct MapRenderer {
     explored: Vec<Vec<bool>>,
-    rays: [Ray; NUM_RAYS],
 }
 
 impl MapRenderer {
     pub fn new(maze: &Maze) -> Self {
         Self {
             explored: exploration_grid(maze),
-            rays: [Ray::default(); NUM_RAYS],
         }
     }
 
@@ -49,10 +40,12 @@ impl MapRenderer {
 
         let max_distance = block_size as f32 * VIEW_DISTANCE_IN_CELLS;
 
-        for (index, ray) in self.rays.iter_mut().enumerate() {
+        // Se lanzan rayos únicamente para descubrir celdas. Sus segmentos no
+        // se guardan ni se dibujan en el mapa 2D.
+        for index in 0..NUM_RAYS {
             let fraction = index as f32 / (NUM_RAYS - 1) as f32;
             let angle = player.a - fov / 2.0 + fov * fraction;
-            let distance = cast_ray(
+            cast_ray(
                 maze,
                 player,
                 angle,
@@ -60,8 +53,6 @@ impl MapRenderer {
                 max_distance,
                 &mut self.explored,
             );
-
-            *ray = Ray { angle, distance };
         }
     }
 
@@ -80,7 +71,6 @@ impl MapRenderer {
         };
 
         self.draw_cells(framebuffer, maze, &layout);
-        self.draw_rays(framebuffer, player, block_size, &layout);
         self.draw_player(framebuffer, player, block_size, &layout);
     }
 
@@ -102,24 +92,6 @@ impl MapRenderer {
 
                 draw_rectangle(framebuffer, left, top, right, bottom, color);
             }
-        }
-    }
-
-    fn draw_rays(
-        &self,
-        framebuffer: &mut Framebuffer,
-        player: &Player,
-        block_size: usize,
-        layout: &MapLayout,
-    ) {
-        let start = layout.world_to_screen(player.pos.x, player.pos.y, block_size);
-
-        for ray in self.rays {
-            let end_x = player.pos.x + ray.distance * ray.angle.cos();
-            let end_y = player.pos.y + ray.distance * ray.angle.sin();
-            let end = layout.world_to_screen(end_x, end_y, block_size);
-
-            draw_line(framebuffer, start, end, RAY_COLOR);
         }
     }
 
@@ -207,7 +179,7 @@ fn same_shape(explored: &[Vec<bool>], maze: &Maze) -> bool {
 fn explored_cell_color(cell: char) -> u32 {
     match cell {
         ' ' => 0xF5F5F5,
-        '+' | '-' | '|' | 'L' | 'R' => 0x303030,
+        '+' | '_' | '-' | '|' | 'L' | 'R' => 0x303030,
         'D' => 0x8D6E63,
         'K' => 0xFBC02D,
         'g' | 'G' => 0x43A047,
@@ -232,40 +204,6 @@ fn draw_rectangle(
     for y in top..bottom {
         for x in left..right {
             framebuffer.point(x, y);
-        }
-    }
-}
-
-fn draw_line(
-    framebuffer: &mut Framebuffer,
-    (mut x0, mut y0): (isize, isize),
-    (x1, y1): (isize, isize),
-    color: u32,
-) {
-    let dx = (x1 - x0).abs();
-    let step_x = if x0 < x1 { 1 } else { -1 };
-    let dy = -(y1 - y0).abs();
-    let step_y = if y0 < y1 { 1 } else { -1 };
-    let mut error = dx + dy;
-
-    framebuffer.set_current_color(color);
-    loop {
-        if x0 >= 0 && y0 >= 0 {
-            framebuffer.point(x0 as usize, y0 as usize);
-        }
-
-        if x0 == x1 && y0 == y1 {
-            break;
-        }
-
-        let doubled_error = error * 2;
-        if doubled_error >= dy {
-            error += dy;
-            x0 += step_x;
-        }
-        if doubled_error <= dx {
-            error += dx;
-            y0 += step_y;
         }
     }
 }

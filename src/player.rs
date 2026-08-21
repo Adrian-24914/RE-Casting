@@ -1,4 +1,4 @@
-use minifb::{Key, Window};
+use minifb::{Key, MouseMode, Window};
 use nalgebra_glm::Vec2;
 use std::f32::consts::PI;
 
@@ -14,6 +14,19 @@ pub struct Player {
 pub struct GameEvents {
     pub key_collected: bool,
     pub door_opened: bool,
+}
+
+/// Conserva la posición horizontal anterior del mouse para convertir su
+/// desplazamiento en rotación de cámara.
+#[derive(Default)]
+pub struct InputState {
+    previous_mouse_x: Option<f32>,
+}
+
+impl InputState {
+    pub fn reset_mouse(&mut self) {
+        self.previous_mouse_x = None;
+    }
 }
 
 fn can_move_to(maze: &Maze, position: &Vec2, block_size: usize, radius: f32) -> bool {
@@ -86,9 +99,11 @@ pub fn process_events(
     player: &mut Player,
     maze: &mut Maze,
     block_size: usize,
+    input: &mut InputState,
 ) -> GameEvents {
     const MOVE_SPEED: f32 = 7.0;
     const ROTATION_SPEED: f32 = PI / 40.0;
+    const MOUSE_SENSITIVITY: f32 = 0.004;
     const PLAYER_RADIUS: f32 = 10.0;
 
     if window.is_key_down(Key::A) {
@@ -97,6 +112,17 @@ pub fn process_events(
 
     if window.is_key_down(Key::D) {
         player.a += ROTATION_SPEED;
+    }
+
+    // MouseMode::Discard evita saltos cuando el cursor está fuera de la
+    // ventana. Solo se usa X porque la rúbrica pide rotación horizontal.
+    if let Some((mouse_x, _)) = window.get_mouse_pos(MouseMode::Discard) {
+        if let Some(previous_x) = input.previous_mouse_x {
+            player.a += (mouse_x - previous_x) * MOUSE_SENSITIVITY;
+        }
+        input.previous_mouse_x = Some(mouse_x);
+    } else {
+        input.previous_mouse_x = None;
     }
 
     let mut movement = 0.0;
