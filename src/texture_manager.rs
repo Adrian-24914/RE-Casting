@@ -51,7 +51,8 @@ pub struct TextureManager {
     door: Texture,
     floor: Texture,
     key: Texture,
-    stone: Texture,
+    stone_one: Texture,
+    stone_p: Texture,
     wall: Texture,
     wall_left: Texture,
     wall_right: Texture,
@@ -66,7 +67,8 @@ impl TextureManager {
             door: Texture::load(&directory.join("Door.png"))?,
             floor: Texture::load(&directory.join("Floor.png"))?,
             key: Texture::load(&directory.join("Key.png"))?,
-            stone: Texture::load(&directory.join("Stone_P.png"))?,
+            stone_one: Texture::load(&directory.join("Stone1.png"))?,
+            stone_p: Texture::load(&directory.join("Stone_P.png"))?,
             wall: Texture::load(&directory.join("Wall.png"))?,
             wall_left: Texture::load(&directory.join("Wall_L.png"))?,
             wall_right: Texture::load(&directory.join("Wall_R.png"))?,
@@ -75,7 +77,8 @@ impl TextureManager {
 
     pub fn texture_for_cell(&self, cell: char) -> &Texture {
         match cell {
-            '+' => &self.stone,
+            '+' => &self.stone_one,
+            '_' => &self.stone_p,
             'D' => &self.door,
             'g' | 'G' => &self.floor,
             'L' => &self.wall_left,

@@ -52,6 +52,10 @@ impl Renderer {
         };
     }
 
+    pub fn is_map_visible(&self) -> bool {
+        matches!(self.mode, RenderMode::Map2D)
+    }
+
     pub fn render(&mut self, framebuffer: &mut Framebuffer, maze: &Maze, player: &Player) {
         self.map_renderer
             .update_exploration(maze, player, BLOCK_SIZE, FOV);
