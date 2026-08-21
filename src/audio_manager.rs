@@ -5,8 +5,31 @@ use std::path::{Path, PathBuf};
 use rodio::{Decoder, DeviceSinkBuilder, MixerDeviceSink, Player, Source};
 
 const BACKGROUND_MUSIC: &str = "Background.mp3";
+const TAYLOR_MUSIC: &str = "Taylor.mp3";
 const KEY_SOUND: &str = "KeyPickup.mp3";
 const DOOR_SOUND: &str = "DoorOpen.mp3";
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum MusicChoice {
+    Normal,
+    TaylorSwift,
+}
+
+impl MusicChoice {
+    pub fn toggle(self) -> Self {
+        match self {
+            Self::Normal => Self::TaylorSwift,
+            Self::TaylorSwift => Self::Normal,
+        }
+    }
+
+    pub fn label(self) -> &'static str {
+        match self {
+            Self::Normal => "NORMAL",
+            Self::TaylorSwift => "TAYLOR SWIFT",
+        }
+    }
+}
 
 pub struct AudioManager {
     device: Option<MixerDeviceSink>,
@@ -27,14 +50,23 @@ impl AudioManager {
         }
     }
 
-    pub fn play_background_music(&mut self) {
+    /// Cambia inmediatamente entre los dos archivos de música disponibles.
+    pub fn play_background_music(&mut self, choice: MusicChoice) {
         let Some(device) = &self.device else {
             return;
         };
-        let Some(source) = self.load_audio(BACKGROUND_MUSIC) else {
+
+        let file_name = match choice {
+            MusicChoice::Normal => BACKGROUND_MUSIC,
+            MusicChoice::TaylorSwift => TAYLOR_MUSIC,
+        };
+        let Some(source) = self.load_audio(file_name) else {
             return;
         };
 
+        // Al descartar el Player anterior, su pista se detiene antes de
+        // conectar la nueva al mezclador.
+        self.music = None;
         let music = Player::connect_new(device.mixer());
         music.set_volume(0.30);
         music.append(source.repeat_infinite());
