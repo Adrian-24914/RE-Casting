@@ -69,7 +69,7 @@ pub fn cast_ray_3d(maze: &Maze, player: &Player, a: f32, block_size: usize) -> O
 
         let cell = maze[row][column];
         if !matches!(cell, ' ' | 'K') {
-            // El salto de 5 píxeles es rápido, pero aproximado. Refinamos
+            // El salto de 5 píxeles es rápido, pero aproximado. Se refina
             // solamente el último salto para fijar la textura a la pared.
             let mut before_wall = (distance - RAY_STEP).max(0.0);
             let mut inside_wall = distance;

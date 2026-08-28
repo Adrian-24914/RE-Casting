@@ -115,7 +115,7 @@ pub fn process_events(
     }
 
     // MouseMode::Discard evita saltos cuando el cursor está fuera de la
-    // ventana. Solo se usa X porque la rúbrica pide rotación horizontal.
+    // ventana. 
     if let Some((mouse_x, _)) = window.get_mouse_pos(MouseMode::Discard) {
         if let Some(previous_x) = input.previous_mouse_x {
             player.a += (mouse_x - previous_x) * MOUSE_SENSITIVITY;
